@@ -1,0 +1,155 @@
+require 'yaml'
+require 'base64'
+require 'kubeclient'
+
+kube_config = ENV['KUBECONFIG'] || File.expand_path('~/.kube/config')
+environment = ENV['ENVIRONMENT'] || raise("Must set ENVIRONMENT env var")
+application = ENV['APPLICATION'] || raise("Must set APPLICATION env var")
+kube_namespace = ENV['KUBE_NAMESPACE'] || raise("Must set KUBE_NAMESPACE env var")
+
+
+config = Kubeclient::Config.read(kube_config)
+
+@client = Kubeclient::Client.new(
+  config.context.api_endpoint,
+    config.context.api_version,
+    {
+      ssl_options: config.context.ssl_options,
+      auth_options: config.context.auth_options
+    }
+)
+
+raise "Please install sops: https://github.com/mozilla/sops" unless system("which sops >/dev/null")
+
+desc "Interact with the Kubernetes API"
+namespace :kubectl do
+  desc "Create secrets contained in secrets.yaml file"
+  task :create_secrets do
+    secrets_file = "data/#{application}/#{environment}_secrets.yaml"
+    raise "Can't find file #{secrets_file}" unless File.exist?(secrets_file)
+
+    load_secret_data(secrets_file).each do |key, val|
+      puts "Creating secret #{key} in #{kube_namespace}"
+      secret = Kubeclient::Resource.new
+      secret.metadata = {}
+      secret.metadata.name = key
+      secret.metadata.namespace = kube_namespace
+      secret.data = {}
+      val.each do |name, value|
+        secret.data[name] = Base64.strict_encode64(value)
+      end
+      if get_secrets_from_cluster(key, kube_namespace)
+        puts "  Already exists, updating"
+        @client.update_secret(secret)
+      else
+        puts "  Does not exist, creating"
+        @client.create_secret(secret)
+      end
+      puts "    Done"
+    end
+
+    # Load in any secrets from single files
+    Dir.glob("data/#{application}/#{environment}_*_secret.*").each do |file|
+      key = file.gsub(/data\/#{application}\/#{environment}_(.*)_secret.*/, '\1')
+      data = `sops -d #{file}`
+
+      puts "Creating secret #{key} in #{kube_namespace}"
+      secret = Kubeclient::Resource.new
+      secret.metadata = {}
+      secret.metadata.name = key
+      secret.metadata.namespace = kube_namespace
+      secret.data = {}
+      secret.data[key] = Base64.strict_encode64(data)
+      if get_secrets_from_cluster(key, kube_namespace)
+        puts "  Already exists, updating"
+        @client.update_secret(secret)
+      else
+        puts "  Does not exist, creating"
+        @client.create_secret(secret)
+      end
+    end
+  end
+
+  desc "Create configmaps from file"
+  task :create_configmaps do
+    global_configmaps_file = "data/global/#{environment}_configmaps.yaml"
+    configmaps_file = "data/#{application}/#{environment}_configmaps.yaml"
+
+    if File.exists?(global_configmaps_file)
+      global_configmaps_data = YAML.load_file(global_configmaps_file)
+      create_config(global_configmaps_data, kube_namespace, application)
+    else
+      puts "Could not find global configmap file"
+    end
+
+    if File.exists?(configmaps_file)
+      configmaps_data = YAML.load_file(configmaps_file)
+      create_config(configmaps_data, kube_namespace)
+    else
+      puts "No application specific config map file found for #{application}, skipping"
+    end
+    puts "Done!"
+  end
+
+  desc "Delete all secrets contained in secrets file"
+  task :delete_secrets do
+    secrets_file = "data/#{application}/#{environment}_secrets.yaml"
+    raise "Can't find file #{secrets_file}" unless File.exist?(secrets_file)
+
+    load_secret_data(secrets_file).each do |key, val|
+      puts "Deleting secret: #{key}"
+      if get_secrets_from_cluster(key, kube_namespace)
+        puts "  Deleting"
+        @client.delete_secret(key, kube_namespace)
+        puts "    Done"
+      else
+        puts "  Does not exist, skipping"
+      end
+    end
+  end
+
+  def create_config(data, namespace, app=nil)
+    data.each do |key, val|
+      config_name = app.nil?() ? "#{key}" : "#{app}-#{key}"
+      puts "Creating configmap #{config_name} in #{namespace}"
+
+      configmap = Kubeclient::Resource.new
+      configmap.metadata = {
+        name: config_name,
+        namespace: namespace,
+      }
+      configmap.data = val
+
+      if get_configmaps_from_cluster(config_name, namespace)
+        puts "  Already exists, updating"
+        @client.update_config_map(configmap)
+      else
+        puts "  Does not exist, creating"
+        @client.create_config_map(configmap)
+      end
+      puts "    Done"
+    end
+  end
+
+  def load_secret_data(file)
+    raise "Please install sops: https://github.com/mozilla/sops" unless system("which sops >/dev/null")
+    puts "Fetching secrets from #{file}"
+    yaml_data = YAML.load(`sops -d #{file}`)
+  end
+
+  def get_secrets_from_cluster(name, namespace)
+    begin
+      @client.get_secret(name, namespace)
+    rescue KubeException
+      return false
+    end
+  end
+
+  def get_configmaps_from_cluster(name, namespace)
+    begin
+      @client.get_config_map(name, namespace)
+    rescue KubeException
+      return false
+    end
+  end
+end

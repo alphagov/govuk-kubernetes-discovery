@@ -1,0 +1,2 @@
+content-store-config:
+  MONGODB_URI: "mongodb://mongo-0.mongo.frontend.svc.cluster.local,mongo-1.mongo.frontend.svc.cluster.local,mongo-2.mongo.frontend.svc.cluster.local:27017/content_store_production"

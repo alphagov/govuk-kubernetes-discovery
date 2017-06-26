@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: echoserver
+  namespace: echoserver
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:eu-west-1:123456789999:certificate/deadbeef-f8dd-4a43-ace8-3725b1639a84"
+    alb.ingress.kubernetes.io/subnets: kubernetes_application_public_a,kubernetes_application_public_b,kubernetes_application_public_c
+    alb.ingress.kubernetes.io/security-groups: kubernetes_application_alb_ingress_controller
+    alb.ingress.kubernetes.io/tags: Environment=dev
+spec:
+  rules:
+  - host: echoserver.cloud.example.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: echoserver
+          servicePort: 80

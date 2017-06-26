@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: frontend-load-balancer
+  namespace: frontend
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: "frontend-static-ip"
+spec:
+  tls:
+  - secretName: frontend-sslcert
+  backend:
+    serviceName: government-frontend
+    servicePort: 80
+  rules:
+  - host: cloud.example.com
+    http:
+      paths:
+      - path: /government/*
+        backend:
+          serviceName: government-frontend
+          servicePort: 80
+      - path: /content/*
+        backend:
+          serviceName: content-store
+          servicePort: 80
+  - host: release.cloud.example.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: release
+          servicePort: 80

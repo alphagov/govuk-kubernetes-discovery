@@ -1,0 +1,8 @@
+# Create a GCE Persistent Volume Claim for use by mongodb
+kind: StorageClass
+apiVersion: storage.k8s.io/v1beta1
+metadata:
+  name: mongodb-hdd
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard

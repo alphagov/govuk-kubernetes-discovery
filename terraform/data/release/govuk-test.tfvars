@@ -1,0 +1,5 @@
+"google_project" = "govuk-test"
+"zone_name" = "govuk-test"
+"backend_dns_name" = "backend.cloud.example.com."
+"release_dns_name" = "release.cloud.example.com."
+"database_name" = "release-16660902"

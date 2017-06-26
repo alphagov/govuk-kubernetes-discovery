@@ -1,0 +1,2 @@
+bucket = "govuk-terraform-state-integration"
+path   = "terraform-gke-base.tfstate"

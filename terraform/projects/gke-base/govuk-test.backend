@@ -1,0 +1,2 @@
+bucket = "govuk-terraform-state-test"
+path   = "terraform-gke-base.tfstate"

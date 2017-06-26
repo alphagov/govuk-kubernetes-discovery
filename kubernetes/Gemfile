@@ -1,0 +1,8 @@
+source 'http://rubygems.org'
+
+gem 'rake'
+gem 'kubeclient'
+
+if ENV['DEBUG']
+  gem 'pry'
+end

@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: backend-load-balancer
+  namespace: backend
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: "backend-static-ip"
+spec:
+  tls:
+  - secretName: backend-sslcert
+  backend:
+    serviceName: release
+    servicePort: 80
+  rules:
+  - host: release.gke.integration.publishing.service.gov.uk
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: release
+          servicePort: 80

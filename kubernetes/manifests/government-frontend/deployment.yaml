@@ -1,0 +1,53 @@
+# Government Frontend deployment
+#
+# Deploys 3 replicas of the government frontend (release_325)
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  generation: 2
+  labels:
+    app: government-frontend
+    version: release_325
+  name: government-frontend
+  namespace: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: government-frontend
+      version: release_325
+  template:
+    metadata:
+      labels:
+        app: government-frontend
+        version: release_325
+      name: government-frontend
+    spec:
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: government-frontend-global-config
+          - configMapRef:
+              name: government-frontend-config
+              optional: true
+          - secretRef:
+              name: government-frontend-secrets
+        image: govuk/government-frontend:release_325
+        imagePullPolicy: IfNotPresent
+        name: government-frontend
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 3090
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 3090
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        ports:
+        - containerPort: 3090
+          protocol: TCP
+      restartPolicy: Always

@@ -1,0 +1,65 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "kube-aws Kubernetes cluster {{.ClusterName}}",
+  "Resources": {
+    "{{.ControlPlane.Name}}": {
+      "Type" : "AWS::CloudFormation::Stack",
+      "Properties" : {
+        "Tags" : [
+          {
+            "Key": "KubernetesCluster",
+            "Value": "{{$.ClusterName}}"
+          }{{range $k, $v := $.ControlPlane.Tags}},
+          {
+            "Key":"{{$k}}",
+            "Value":"{{$v}}"
+          }{{end}}
+        ],
+        "TemplateURL" : "{{$.ControlPlane.TemplateURL}}"
+      }
+    }{{range $_, $p := .NodePools}},
+    "{{$p.Name}}": {
+      "Type" : "AWS::CloudFormation::Stack",
+      "Properties" : {
+        "Parameters": {
+          "ControlPlaneStackName": {"Fn::GetAtt" : [ "{{$.ControlPlane.Name}}" , "Outputs.StackName" ]}
+        },
+        "Tags" : [
+          {
+            "Key": "KubernetesCluster",
+            "Value": "{{$.ClusterName}}"
+          }{{range $k, $v := $p.Tags}},
+          {
+            "Key":"{{$k}}",
+            "Value":"{{$v}}"
+          }{{end}}
+        ],
+        "TemplateURL" : "{{$p.TemplateURL}}"
+      },
+      "DependsOn": [
+        "{{$.ControlPlane.Name}}"
+      ]
+    }{{end}}
+  },
+  "Outputs": {
+    "ControlPlaneStackName": {
+      "Description": "The name of the control plane stack",
+      "Value": {"Fn::GetAtt" : [ "{{$.ControlPlane.Name}}" , "Outputs.StackName" ]}
+    },
+    "ControllerIAMRoleArn": {
+      "Description": "The IAM Role ARN for controller nodes",
+      "Value": {"Fn::GetAtt" : [ "{{$.ControlPlane.Name}}" , "Outputs.ControllerIAMRoleArn" ]},
+      "Export": { "Name": { "Fn::Sub": "${AWS::StackName}-ControllerIAMRoleArn" } }
+    }{{range $_, $p := .NodePools}},
+    "NodePool{{ $p.Name }}StackName": {
+      "Description": "The name of the {{$p.Name}} node pool stack",
+      "Value": {"Fn::GetAtt" : [ "{{$p.Name}}", "Outputs.StackName" ]},
+      "Export": { "Name": { "Fn::Sub": "${AWS::StackName}-NodePool{{$p.Name}}StackName" } }
+    },
+    "NodePool{{ $p.Name }}WorkerIAMRoleArn": {
+      "Description": "The IAM Role ARN for workers in the {{$p.Name}} node pool stack",
+      "Value": {"Fn::GetAtt" : [ "{{$p.Name}}", "Outputs.WorkerIAMRoleArn" ]},
+      "Export": { "Name": { "Fn::Sub": "${AWS::StackName}-NodePool{{$p.Name}}WorkerIAMRoleArn" } }
+    }{{end}}
+  }
+}

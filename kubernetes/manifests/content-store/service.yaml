@@ -1,0 +1,19 @@
+# Content Store service
+#
+# Sets up external access on port 80 to port 3068
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: content-store
+  name: content-store
+  namespace: frontend
+spec:
+  ports:
+  - name: content-store-lb-tcp-3068-80
+    port: 80
+    protocol: TCP
+    targetPort: 3068
+  selector:
+    app: content-store
+  type: NodePort

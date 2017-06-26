@@ -1,0 +1,47 @@
+# Content store deployment
+#
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: content-store
+    version: release_640
+  name: content-store
+  namespace: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: content-store
+  template:
+    metadata:
+      labels:
+        app: content-store
+        version: release_640
+      name: content-store
+    spec:
+      containers:
+      - name: content-store
+        image: govuk/content-store:release_640
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: content-store-global-config
+        - configMapRef:
+            name: content-store-config
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 3068
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 3068
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        ports:
+        - containerPort: 3068
+          protocol: TCP
+      restartPolicy: Always

@@ -1,0 +1,5 @@
+"database_dns_name" = "releasedb.cloud.example.com."
+"remote_state_dns_zone_key" = "terraform-cloud-dns-zone.tfstate"
+"remote_state_dns_zone_bucket" = "govuk-terraform-state-integration"
+"remote_state_govuk_network_base_key" = "terraform-govuk-network-base.tfstate"
+"remote_state_govuk_network_base_bucket" = "govuk-terraform-state-integration"

@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: <%= @application %>
+  namespace: <%= @config['namespace'] %>
+  annotations:
+    ingress.kubernetes.io/allow-http: "false"
+spec:
+  tls:
+  - secretName: <%= @config['tls']['secretname'] %>
+  backend:
+    serviceName: <%= @application %>
+    servicePort: <%= @config['serviceport'] %>
+  rules:
+  - http:
+      paths:
+      - path: <%= @config['path'] %>
+        backend:
+          serviceName: <%= @application %>
+          servicePort: <%= @config['serviceport'] %>

@@ -1,0 +1,4 @@
+mongo-sidecar-config:
+  MONGO_SIDECAR_POD_LABELS: "role=mongo"
+  KUBE_NAMESPACE: frontend
+  KUBERNETES_MONGO_SERVICE_NAME: mongo

@@ -1,0 +1,4 @@
+bucket  = "govuk-terraform-state-integration"
+key     = "terraform-release.tfstate"
+encrypt = true
+region  = "eu-west-1"

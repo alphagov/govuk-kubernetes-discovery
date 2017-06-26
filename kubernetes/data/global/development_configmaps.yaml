@@ -1,0 +1,14 @@
+global-config:
+  ERRBIT_ENVIRONMENT_NAME: integration
+  GOVUK_APP_DOMAIN: integration.cloud.publishing.service.gov.uk
+  GOVUK_ASSET_HOST: https://assets.publishing.service.gov.uk
+  GOVUK_ASSET_ROOT: https://assets.publishing.service.gov.uk
+  GOVUK_ENV: development
+  GOVUK_WEBSITE_ROOT: https://www.cloud.publishing.service.gov.uk
+  NODE_ENV: development
+  RACK_ENV: development
+  RAILS_ENV: development
+  RAILS_SERVE_STATIC_FILES: 'true'
+  PLEK_SERVICE_SIGNON_URI: https://signon.integration.publishing.service.gov.uk
+  PLEK_SERVICE_CONTENT_STORE_URI: https://www.gov.uk/api
+  PLEK_SERVICE_STATIC_URI: assets.publishing.service.gov.uk

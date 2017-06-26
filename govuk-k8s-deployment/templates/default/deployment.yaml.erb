@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: <%= @application %>
+  namespace: <%= @config['namespace'] %>
+spec:
+  replicas: <%= @config['replicas'] %>
+  selector:
+    matchLabels:
+      app: <%= @application %>
+      env: <%= @environment %>
+  template:
+    metadata:
+      name: <%= @application %>
+      labels:
+        app: <%= @application %>
+        env: <%= @environment %>
+    spec:
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: government-frontend-env-configmap
+          - secretRef:
+              name: government-frontend-env-secret
+        image: govuk/<%= @application %>:<%= @tag %>
+        imagePullPolicy: IfNotPresent
+        name: <%= @application %>
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: <%= @config['port'] %>
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: <%= @config['port'] %>
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        ports:
+        - containerPort: <%= @config['port'] %>
+          protocol: TCP
+      restartPolicy: Always
+

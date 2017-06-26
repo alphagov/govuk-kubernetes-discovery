@@ -1,0 +1,58 @@
+#
+# Create, migrate and seed the release database.
+#
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: release-db-deploy
+  namespace: frontend
+spec:
+  template:
+    metadata:
+      name: release-db-deploy
+    spec:
+      containers:
+      - name: release
+        image: gcr.io/govuk-test/release:unsafeV2
+        imagePullPolicy: IfNotPresent
+        command: ['bundle', 'exec', 'rake', 'db:create', 'db:migrate', 'db:seed']
+        envFrom:
+          - configMapRef:
+              name: release-global-config
+          - configMapRef:
+              name: release-config
+              optional: true
+          - secretRef:
+              name: release-secrets
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 3036
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        ports:
+        - containerPort: 3036
+          protocol: TCP
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.09
+        command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                  "-instances=govuk-test:europe-west1:release-16660902=tcp:3306",
+                  "-credential_file=/secrets/cloudsql/release-cloudsql-service-account"]
+        volumeMounts:
+          - name: cloudsql-service-account-volume
+            mountPath: /secrets/cloudsql
+            readOnly: true
+          - name: ssl-certs
+            mountPath: /etc/ssl/certs
+          - name: cloudsql
+            mountPath: /cloudsql
+      volumes:
+      - name: cloudsql-service-account-volume
+        secret:
+          secretName: release-cloudsql-service-account
+      - name: ssl-certs
+        hostPath:
+          path: /etc/ssl/certs
+      - name: cloudsql
+        emptyDir:
+      restartPolicy: Never

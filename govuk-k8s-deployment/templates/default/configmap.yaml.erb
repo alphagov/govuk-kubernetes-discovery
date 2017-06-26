@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <%= @config['name'] %>
+  namespace: <%= @config['namespace'] %>
+data:
+<%- @config['data'].each do | key, value | -%>
+  <%= key %>: <%= value %>
+<%- end -%>

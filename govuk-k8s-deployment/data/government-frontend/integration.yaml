@@ -1,0 +1,44 @@
+---
+government-frontend::namespace:
+  name: government-frontend
+
+government-frontend::configmap:
+  - name: government-frontend-env-configmap
+    namespace: government-frontend
+    data:
+      TEST: test
+      GOVUK_APP_DOMAIN: www.gov.uk
+      GOVUK_ASSET_ROOT: assets.publishing.service.gov.uk
+      GOVUK_WEBSITE_ROOT: https://www.gov.uk
+      PLEK_SERVICE_CONTENT_STORE_URI: https://www.gov.uk/api
+      PLEK_SERVICE_STATIC_URI: assets.publishing.service.gov.uk
+      RAILS_SERVE_STATIC_ASSETS: '"yes"'
+      SECRET_KEY_BASE: test
+
+government-frontend::deployment:
+  namespace: government-frontend
+  replicas: 3
+  port: 3090
+
+government-frontend::service:
+  namespace: government-frontend
+  port: 80
+  targetport: 3090
+
+government-frontend::ingress:
+  namespace: government-frontend
+  path: /government/*
+  serviceport: 80
+  tls:
+    secretname: government-frontend-ingress-tls-secret
+
+government-frontend::secret:
+  - name: government-frontend-env-secret
+    namespace: government-frontend
+    data:
+      DB_USERNAME: USER
+  - name: government-frontend-ingress-tls-secret
+    namespace: government-frontend
+    data:
+      tls.crt: <gpg TLS certificate (in base64) here>
+      tls.key: <gpg TLS private key (in base64) here>

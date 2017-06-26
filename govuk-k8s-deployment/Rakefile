@@ -1,0 +1,8 @@
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:rspec)
+
+FileList['lib/tasks/*.rake','lib/tasks/*/*.rake'].each do |rake_file|
+  import rake_file
+end
+

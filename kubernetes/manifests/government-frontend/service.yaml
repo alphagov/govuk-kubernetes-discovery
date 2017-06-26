@@ -1,0 +1,21 @@
+# Government Frontend service
+#
+# Sets up external access on port 80 to port 3090 using a load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: government-frontend
+    version: release_325
+  name: government-frontend
+  namespace: frontend
+spec:
+  ports:
+  - name: government-frontend-lb-tcp-3090-80
+    port: 80
+    protocol: TCP
+    targetPort: 3090
+  selector:
+    app: government-frontend
+    version: release_325
+  type: NodePort
