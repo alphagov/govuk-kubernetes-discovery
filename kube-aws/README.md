@@ -12,13 +12,13 @@ configure your AWS credentials as explained in the CoreOS documentation.
 ## Cluster parameters
 
 `kube-aws` needs some preexisting AWS resources: EC2 key pair, KMS key, external DNS name and S3 bucket.
-These resources are managed by the Terraform `govuk-kubernetes-<cluster>` stack, so it needs to be
-applied before proceeding to create the cluster.
+These resources are managed by a Terraform kubernetes stack. Before creating a new cluster, apply the
+Terraform stack and copy the output of the resources to initialise the Kubernetes cluster.
 
 ## Initialise Assets directory
 
-This directory contains a sub-directory for each Kubernetes cluster/environment that we are going to manage,
-in the way `<cluster-name>/<environment>`
+This directory contains a sub-directory for each Kubernetes cluster and environment that we manage, with the
+structure `<cluster-name>/<environment>`
 
 As explained in the CoreOS documentation, the `kube-aws init` command initialises the CloudFormation stack 
 with the parameters created by Terraform. This command generates a `cluster.yaml` file that we can
@@ -86,21 +86,26 @@ $ rm kubeconfig
 ## Authenticate with a specific stack
 
 1. Export your AWS credentials
-2. `cd credentials`
-3. `for i in $(ls *.enc_sops | sed 's/.enc_sops//'); do sops -d $i.enc_sops > $i; done`
-4. `export KUBECONFIG=$(pwd)/kubeconfig`
-5. `kubectl get nodes`
+2.
+```
+cd credentials
+for i in $(ls *.enc_sops | sed 's/.enc_sops//'); do sops -d $i.enc_sops > $i; done`
+export KUBECONFIG=$(pwd)/kubeconfig
+```
+3. Test the credentials running `kubectl get nodes`
 
 ## Additional configuration for ALB Ingress Controller
 
 The `govuk-kubernetes-application` Terraform project creates additional resources that
-need to be updated on the cluster after creation:
+need to be updated in `cluster.yaml` or after creation:
 
-- Attach `kubernetes_alb_ingress_controller_policy_arn` to the Kubernetes Worker IAM role. `kube-aws` version 0.9.7 will allow to attach policies to
-nodes in the cluster.yaml, until then this needs to be done manually. Check https://github.com/kubernetes-incubator/kube-aws/issues/340
-for more information
+- Attach `kubernetes_alb_ingress_controller_policy_arn` to the Kubernetes Worker IAM role. `kube-aws`
+version 0.9.7 will allow to attach policies to nodes in the cluster.yaml file, but until then we needs to
+do this manually. Check https://github.com/kubernetes-incubator/kube-aws/issues/340 for more information
 
-- Add `security_group_alb_worker_controller_id` to the Kubernetes Worker security groups, to enable access from ALBs created with the Ingress Controller
+- Add the value of the resource `security_group_worker_ingress_controller_id` to the Kubernetes Worker
+security groups in the cluster.yaml. This will enable access from ALBs created with the Ingress Controller to
+the worker nodes
 
 For more information about `kube-aws` or how to customise the cluster, read the provider documentation.
 
